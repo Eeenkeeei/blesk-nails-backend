@@ -102,7 +102,6 @@ server.post('/getRecordsByDate', (req, res, next) => {
 
 
 server.post('/updateRecord', (req, res, next) => {
-    let recordData = req.body;
     records.find({year: req.body.year}).toArray((err, result) => {
         records.updateOne(
             {year: req.body.year},
@@ -119,11 +118,11 @@ server.post('/updateRecord', (req, res, next) => {
                             req.body.comment,
                             req.body.cost)["2019"]
                     }
-            }, (WriteResult)=> {console.log(WriteResult)}
-        )
+            }
+        );
+        res.send(result[0][req.body.year][req.body.month]);
+        next();
     });
-    res.send('updated');
-    next();
 });
 
 const port = process.env.PORT || 7777;
