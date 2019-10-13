@@ -1,12 +1,8 @@
-const newUser = require('./newUser');
 const restify = require('restify');
 const {InvalidCredentialsError} = require('restify-errors');
 const MongoClient = require("mongodb").MongoClient;
-const rjwt = require('restify-jwt-community');
-const jwt = require('jsonwebtoken');
 const config = require('./config');
 const server = restify.createServer({handleUpgrades: true});
-const bcrypt = require('bcryptjs');
 const moment = require('moment');
 const dateFormatForMoment = 'Do MMMM YYYY, HH:mm:ss';
 const uuidv4 = require('uuid/v4');
@@ -14,10 +10,6 @@ moment.locale('ru');
 
 server.use(restify.plugins.bodyParser());
 server.use(restify.plugins.queryParser());
-
-server.use(rjwt(config.jwt).unless({
-    path: ['/sync'],
-}));
 
 const url = "mongodb://ROOT:shiftr123@ds019634.mlab.com:19634/heroku_gj1rg06b";
 const mongoClient = new MongoClient(url, {
@@ -75,10 +67,6 @@ mongoClient.connect(function (err, client) {
     //         "12": returnDaysInMonth("2019-12")
     //     }
     // })
-    records.find({year: "2019"}).toArray(function (err, result) {
-        let response = result[0];
-        records.updateOne({year: "2019"}, {$set: { "2019": returnUpdatedDay(result[0], 2019, 10, 1, 3, '9:00', 'comment', 500)["2019"]}})
-    });
 });
 
 const returnUpdatedDay = (result, year, month, day, recordNumber, time, comment, cost) => {
@@ -105,27 +93,30 @@ server.pre((req, res, next) => {
     next();
 });
 
-
-server.post('/updateData', (req, res, next) => {
-    console.log('UPDATE DATA');
-    let userData = req.body;
-    console.log(userData);
-    collection.replaceOne({email: req.body.email}, {
-        email: req.body.email,
-        password: req.body.password,
-        registrationDate: req.body.registrationDate,
-        lastLoginDate: req.body.lastLoginDate,
-        admin: req.body.admin,
-        lessons: req.body.lessons,
-        lessonTasks: req.body.lessonTasks,
-        teachers: req.body.teachers,
-        lessonTime: req.body.lessonTime
+server.post('/updateRecord', (req, res, next) => {
+    let recordData = req.body;
+    records.find({year: req.body.year}).toArray((err, result) => {
+        records.updateOne(
+            {year: req.body.year},
+            {
+                $set:
+                    {
+                        [req.body.year]: returnUpdatedDay(
+                            result[0],
+                            req.body.year,
+                            req.body.month,
+                            req.body.day,
+                            req.body.number,
+                            req.body.time,
+                            req.body.comment,
+                            req.body.cost)["2019"]
+                    }
+            }, (WriteResult)=> {console.log(WriteResult)}
+        )
     });
-    console.log('Data updated');
     res.send(req.body);
     next();
 });
-
 
 const port = process.env.PORT || 7777;
 
