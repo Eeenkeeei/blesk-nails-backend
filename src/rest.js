@@ -18,7 +18,7 @@ server.use(rjwt(config.jwt).unless({
     path: ['/sync'],
 }));
 
-const url = "mongodb://root:pass123@ds333768.mlab.com:33768/heroku_n92jz1k4";
+const url = "mongodb://ROOT:shiftr123@ds019634.mlab.com:19634/heroku_gj1rg06b";
 const mongoClient = new MongoClient(url, {
     useNewUrlParser: true,
     poolSize: 2,
@@ -31,9 +31,8 @@ let news;
 let log;
 
 mongoClient.connect(function (err, client) {
-        const db = client.db("heroku_n92jz1k4");
+        const db = client.db("heroku_gj1rg06b");
         collection = db.collection("records");
-        console.log(err)
     }
 );
 
@@ -221,7 +220,7 @@ server.post('/changePassword', (req, res, next) => {
         return;
     }
     mongoClient.connect(async function (err, client) {
-        const db = client.db("heroku_n92jz1k4");
+        const db = client.db("heroku_gj1rg06b");
         const collection = db.collection("users");
         collection.find({username: req.body.username}).toArray(function (err, result) {
             if (result.length !== 0) {
@@ -299,7 +298,7 @@ server.post('/registration', (req, res, next) => {
     const userForDataBase = newUser.newUserConstructor(hashedPassword, req.body.email);
 
     mongoClient.connect(function (err, client) {
-        const db = client.db("heroku_n92jz1k4");
+        const db = client.db("heroku_gj1rg06b");
         const collection = db.collection("users");
         collection.find({email: req.body.email}).toArray(function (err, result) {
             if (result.length === 0) {
