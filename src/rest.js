@@ -80,7 +80,6 @@ const returnUpdatedDay = (result, year, month, day, recordNumber, time, comment,
     return response
 };
 
-
 server.pre((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*'); // * - разрешаем всем
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
@@ -92,6 +91,15 @@ server.pre((req, res, next) => {
     }
     next();
 });
+
+server.post('/getRecordsByDate', (req, res, next) => {
+    let date = req.body; // {year, month}
+    records.find({year: req.body.year}).toArray((err, result) => {
+        res.send(result[0][req.body.year][req.body.month]);
+        next();
+    });
+});
+
 
 server.post('/updateRecord', (req, res, next) => {
     let recordData = req.body;
@@ -114,7 +122,7 @@ server.post('/updateRecord', (req, res, next) => {
             }, (WriteResult)=> {console.log(WriteResult)}
         )
     });
-    res.send(req.body);
+    res.send('updated');
     next();
 });
 
