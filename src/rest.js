@@ -157,7 +157,10 @@ server.post('/auth', (req, res, next) => {
         try {
             if (data === true) {
                 const cryptPass = bcrypt.hashSync(password, 10);
-                const token = jwt.sign({password: cryptPass}, config.jwt.secret);
+                const token = jwt.sign({password: password}, config.jwt.secret, {
+                    expiresIn: '7d'
+                });
+                console.log(token)
                 res.send(token);
             } else {
                 res.send(new InvalidCredentialsError())
@@ -172,7 +175,7 @@ server.post('/setPassword', (req, res, next) => {
     const {password} = req.body;
     let cryptPass = bcrypt.hashSync(password, 10);
     loginData.updateOne({type: "pass"}, {$set: {pass: cryptPass}});
-    let token = jwt.sign({password: cryptPass}, config.jwt.secret,{
+    let token = jwt.sign({password: password}, config.jwt.secret,{
         expiresIn: '7d'
     });
     res.send(token);

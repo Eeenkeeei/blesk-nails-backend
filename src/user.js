@@ -38,7 +38,7 @@ exports.comparePasswords = (password) => {
             const collection = db.collection("loginData");
             collection.findOne({type: "pass"}, (err, data) => {
                 if (data) {
-                    if (data.pass === password) {
+                    if (bcrypt.compareSync(password, data.pass)) {
                         resolve(true)
                     } else {
                         resolve(false)
