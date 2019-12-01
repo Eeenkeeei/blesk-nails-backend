@@ -6,6 +6,9 @@ const server = restify.createServer({handleUpgrades: true});
 const moment = require('moment');
 const dateFormatForMoment = 'Do MMMM YYYY, HH:mm:ss';
 const uuidv4 = require('uuid/v4');
+const user = require('./user');
+const bcrypt = require('bcryptjs');
+
 moment.locale('ru');
 
 server.use(restify.plugins.bodyParser());
@@ -20,7 +23,7 @@ const mongoClient = new MongoClient(url, {
 });
 
 let records;
-
+let loginData;
 const returnDaysInMonth = (year) => {
     let startDay = 1;
     const days = {};
@@ -67,6 +70,8 @@ mongoClient.connect(function (err, client) {
     //         "12": returnDaysInMonth("2019-12")
     //     }
     // })
+    loginData = db.collection("loginData");
+//     loginData.insertOne({type: "pass", pass: 'string'})
 });
 
 const returnUpdatedDay = (result, year, month, day, recordNumber, time, comment, cost) => {
@@ -123,6 +128,26 @@ server.post('/updateRecord', (req, res, next) => {
         res.send(result[0][req.body.year][req.body.month]);
         next();
     });
+});
+
+server.post('/auth', (req,res,next) => {
+    const {password} = req.body;
+    user.authenticate (password).then((data,e) => {
+        try {
+            req(data)
+            return next()
+        }  catch (e) {
+            return next(new InvalidCredentialsError())
+        }
+    })
+});
+
+server.post('/setPassword', (req,res,next) => {
+    const {password} = req.body;
+    let cryptPass = bcrypt.hashSync(password, 10);
+    loginData.updateOne({type: "pass"}, {$set: {pass: cryptPass}});
+    res.send(true);
+    return next()
 });
 
 const port = process.env.PORT || 7777;
