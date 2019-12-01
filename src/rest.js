@@ -8,11 +8,17 @@ const dateFormatForMoment = 'Do MMMM YYYY, HH:mm:ss';
 const uuidv4 = require('uuid/v4');
 const user = require('./user');
 const bcrypt = require('bcryptjs');
+const rjwt = require('restify-jwt-community');
+const jwt = require('jsonwebtoken');
 
 moment.locale('ru');
 
 server.use(restify.plugins.bodyParser());
 server.use(restify.plugins.queryParser());
+
+server.use(rjwt(config.jwt).unless({
+    path: ['/setPassword', '/getRecordsByDate', '/updateRecord', '/auth', '/setPassword'],
+}));
 
 const url = "mongodb://ROOT:shiftr123@ds019634.mlab.com:19634/heroku_gj1rg06b";
 const mongoClient = new MongoClient(url, {
@@ -130,23 +136,46 @@ server.post('/updateRecord', (req, res, next) => {
     });
 });
 
-server.post('/auth', (req,res,next) => {
-    const {password} = req.body;
-    user.authenticate (password).then((data,e) => {
+server.get('/authToken', (req,res,next) => {
+    const decodedObject = jwt.verify(req.headers.authorization.split(' ')[1], config.jwt.secret);
+    user.comparePasswords(decodedObject.password).then((data, e) => {
         try {
-            req(data)
-            return next()
-        }  catch (e) {
-            return next(new InvalidCredentialsError())
+            if (data === true) {
+                res.send(true);
+            } else {
+                res.send(new InvalidCredentialsError())
+            }
+        } catch (e) {
+            res.send(e)
         }
     })
 });
 
-server.post('/setPassword', (req,res,next) => {
+server.post('/auth', (req, res, next) => {
+    const {password} = req.body;
+    user.authenticate(password).then((data, e) => {
+        try {
+            if (data === true) {
+                const cryptPass = bcrypt.hashSync(password, 10);
+                const token = jwt.sign({password: cryptPass}, config.jwt.secret);
+                res.send(token);
+            } else {
+                res.send(new InvalidCredentialsError())
+            }
+        } catch (e) {
+            res.send(e)
+        }
+    })
+});
+
+server.post('/setPassword', (req, res, next) => {
     const {password} = req.body;
     let cryptPass = bcrypt.hashSync(password, 10);
     loginData.updateOne({type: "pass"}, {$set: {pass: cryptPass}});
-    res.send(true);
+    let token = jwt.sign({password: cryptPass}, config.jwt.secret,{
+        expiresIn: '7d'
+    });
+    res.send(token);
     return next()
 });
 

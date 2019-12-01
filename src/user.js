@@ -15,43 +15,36 @@ exports.authenticate = (password) => {
         mongoClient.connect(function (err, client) {
             const db = client.db("heroku_gj1rg06b");
             const collection = db.collection("loginData");
-            collection.findOne({type: "pass"}, (err, data) => { //  в data возвращается объект
-                if (err) return reject(err);
-                let objectToSend = null;
+            collection.findOne({type: "pass"}, (err, data) => {
                 if (data) {
                     if (bcrypt.compareSync(password, data.pass) === true) {
-                        objectToSend = data;
-                        console.log('OBJECT SEND authenticate');
+                        console.log('Пароль подтвержден');
                         resolve(true);
                     } else {
-                        console.log('not confirmed')
+                        console.log('Пароль не подтвержден');
                         resolve(false);
                     }
                 }
+                if (err) return reject(err);
             })
         });
     });
 };
 
-
-exports.returnUpdatedObject = (username, password) => {
+exports.comparePasswords = (password) => {
     return new Promise((resolve, reject) => {
         mongoClient.connect(function (err, client) {
-            const db = client.db("heroku_ww8906l5");
-            const collection = db.collection("users");
-            collection.findOne({username, password}, (err, data) => { //  в data возвращается объект
-                if (err) return reject(err);
-                let objectToSend = null;
-                if (data !== null) {
-                    if (password === data.password) {
-                        objectToSend = data;
-                        console.log('OBJECT SEND returnUpdatedObject')
-                    }
-                    if (password !== data.password) {
-                        console.log('Старый пароль был изменен');
+            const db = client.db("heroku_gj1rg06b");
+            const collection = db.collection("loginData");
+            collection.findOne({type: "pass"}, (err, data) => {
+                if (data) {
+                    if (data.pass === password) {
+                        resolve(true)
+                    } else {
+                        resolve(false)
                     }
                 }
-                resolve(objectToSend);
+                if (err) return reject(err);
             })
         });
     });
