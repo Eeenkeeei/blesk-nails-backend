@@ -69,13 +69,16 @@ mongoClient.connect(function (err, client) {
     const db = client.db("heroku_gj1rg06b");
     records = db.collection("records");
     // records.insertOne({
-    //     "year": "2019",
-    //     "2019": {
-    //         "10": returnDaysInMonth("2019-10"),
-    //         "11": returnDaysInMonth("2019-11"),
-    //         "12": returnDaysInMonth("2019-12")
+    //     "year": "2020",
+    //     "2020": {
+    //         "01": returnDaysInMonth("2020-01"),
+    //         "02": returnDaysInMonth("2020-02"),
+    //         "03": returnDaysInMonth("2020-03"),
+    //         "04": returnDaysInMonth("2020-04"),
+    //         "05": returnDaysInMonth("2020-05"),
+    //         "06": returnDaysInMonth("2020-06")
     //     }
-    // })
+    // });
     loginData = db.collection("loginData");
 //     loginData.insertOne({type: "pass", pass: 'string'})
 });
@@ -105,8 +108,10 @@ server.pre((req, res, next) => {
 
 server.post('/getRecordsByDate', (req, res, next) => {
     let date = req.body; // {year, month}
+    console.log(date)
     records.find({year: req.body.year}).toArray((err, result) => {
         res.send(result[0][req.body.year][req.body.month]);
+        // console.log(result)
         next();
     });
 });
@@ -127,7 +132,7 @@ server.post('/updateRecord', (req, res, next) => {
                             req.body.number,
                             req.body.time,
                             req.body.comment,
-                            req.body.cost)["2019"]
+                            req.body.cost)[req.body.year]
                     }
             }
         );
